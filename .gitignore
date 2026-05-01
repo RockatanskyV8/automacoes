@@ -1,0 +1,10 @@
+**/confidencial.py
+**/__pycache__/
+
+*.csv
+*.json
+*.txt
+
+tts/audio/*
+tts/vozes/*
+finances/finances/*
