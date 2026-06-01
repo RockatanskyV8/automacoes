@@ -36,6 +36,17 @@ def reorganizar(conteudo, num_aula):
         titulo_limpo = re.sub('[^A-Za-z0-9]+', '', titulo_modificado)
         novo_nome_arquivo = num_aula + '_' + titulo_limpo + '_reorganizado.txt'
 
+        if len(novo_nome_arquivo) > 90:
+            print(f"Novo nome de arquivo,{novo_nome_arquivo}, muito longo")
+            primeira_parte = ''.join(titulo_modificado.split(' ')[:4])
+            ultima_parte = ''.join(titulo_modificado.split(' ')[-1])
+            novo_titulo_modificado = ''.join([primeira_parte, ultima_parte])
+
+            novo_titulo_limpo = re.sub('[^A-Za-z0-9]+', '', novo_titulo_modificado)
+            novo_nome_arquivo = num_aula + '_' + novo_titulo_limpo + '_reorganizado.txt'
+
+            print(f"Novo nome de arquivo será: {novo_nome_arquivo}")
+
         m_arq.criar_novo_arquivo(novo_nome_arquivo, conteudo[titulo])
 
 def arquivo_imcompativel(conteudo_original):

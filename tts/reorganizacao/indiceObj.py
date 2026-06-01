@@ -52,10 +52,12 @@ class Indice():
         indice: Dict[str, str] = defaultdict(list)  # type: ignore
         for i in range(len(titulos)):
             titulo, _ = titulos[i]
-            #print(titulo, paginas[i])
-            numero = min([pagina.strip() for pagina in paginas[i] if pagina.isdigit()])
-            titulo_limpo = ' '.join(titulo.split())
-            indice[numero] = titulo_limpo
+            print(titulo, paginas[i])
+            pagina_num = [pagina.strip() for pagina in paginas[i] if pagina.isdigit()]
+            if len(pagina_num):
+                numero = min(pagina_num)
+                titulo_limpo = ' '.join(titulo.split())
+                indice[numero] = titulo_limpo
 
         return dict(indice)
 
