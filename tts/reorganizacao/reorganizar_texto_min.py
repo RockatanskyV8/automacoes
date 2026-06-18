@@ -75,20 +75,26 @@ if __name__ == "__main__":
 
         divis = Divisao(DIVISOR, informacao)
         divis_info = divis.dividir()
-        print(dados)
-        #indx = Indice(divis_info, PADRAO_REGEX)
         #print(divis_info)
         indx = Indice(divis_info)#, PADRAO_REGEX)
-        #indx_extraido = processar_indice(indx.extrair_indice(), 'Sumário')
         indx_extraido = indx.extrair_indice()
         #print(indx_extraido)
-
+ 
         if len(indx_extraido):
             print(num_aula, indx_extraido, "\n")
             conteudo = dicionarizar(indx_extraido, divis_info)
             reorganizar(conteudo, num_aula)
         else:
-            print(num_aula, "indice não compatível com o regex", "\n")
-            doc_desorganizado = arquivo_imcompativel(list(divis_info.values()))
-            m_arq.criar_novo_arquivo(num_aula + '_des_reorganizado.txt', doc_desorganizado)
+            print(num_aula, "Índice não compatível com o regex\nTestando regex alternativo...")
+            indx = Indice(divis_info, PADRAO_REGEX)
+            #indx_extraido = processar_indice(indx.extrair_indice(), 'Sumário')
+            indx_extraido = indx.extrair_indice()
+            if len(indx_extraido):
+                print(num_aula, indx_extraido, "\n")
+                conteudo = dicionarizar(indx_extraido, divis_info)
+                reorganizar(conteudo, num_aula)
+            else:
+                print(num_aula, "Índice alternativo também não compatível com o regex\nFazendo versão desorganizada...")
+                doc_desorganizado = arquivo_imcompativel(list(divis_info.values()))
+                m_arq.criar_novo_arquivo(num_aula + '_des_reorganizado.txt', doc_desorganizado)
 
