@@ -1,4 +1,4 @@
-python3 ~/codes/tts/reorganizacao/reorganizar_texto_min.py $@
+~/codes/tts/audio/bin/python3 ~/codes/tts/reorganizacao/reorganizar_texto_min.py $@
 
 mkdir -p reorganizado
 mv *_reorganizado.txt reorganizado
