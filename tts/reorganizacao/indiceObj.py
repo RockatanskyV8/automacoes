@@ -1,8 +1,7 @@
 import re
 import sys
-import os
 from collections import defaultdict
-from typing import List, Dict, Tuple, Optional, Any, Union
+from typing import List, Dict, Tuple, Any
 
 class Indice():
 

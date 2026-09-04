@@ -14,7 +14,7 @@ def numero_aula(nome_arquivo):
 
     if match:
         return match.group()
-        print(f"Padrão encontrado: {aula_encontrada}")
+        print("Padrão encontrado")
         # Saída: aula-00
     else:
         return ''
@@ -62,6 +62,7 @@ def processar_indice(indx, separador):
 
 DIVISOR = conf.DIVISOR
 PADRAO_REGEX = conf.PADRAO_REGEX_ALT
+REMOCAO = conf.REMOVER
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
@@ -73,7 +74,7 @@ if __name__ == "__main__":
         informacao = m_arq.abrir_arquivo(dados)
         num_aula = numero_aula(dados)
 
-        divis = Divisao(DIVISOR, informacao)
+        divis = Divisao(DIVISOR, informacao, REMOCAO)
         divis_info = divis.dividir()
         #print(divis_info)
         indx = Indice(divis_info)#, PADRAO_REGEX)
