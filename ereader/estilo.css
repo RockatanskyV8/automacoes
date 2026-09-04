@@ -1,0 +1,26 @@
+/* Garante que os subtítulos tenham destaque visual */
+h1 {
+    font-size: 1.8em;
+    font-weight: bold;
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+}
+
+h2 {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #333333;
+    margin-top: 1.2em;
+    margin-bottom: 0.4em;
+    display: block !important; /* Força a exibição caso o leitor oculte */
+}
+
+h3 {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #555555;
+    margin-top: 1em;
+    margin-bottom: 0.3em;
+    display: block !important;
+}
+
