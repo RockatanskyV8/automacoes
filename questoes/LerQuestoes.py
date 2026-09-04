@@ -23,34 +23,55 @@ class Questao:
         comentario_val = not self.comentario == ""
         return enunciado_val and comentario_val
 
-def parse_banca(texto):
-    padrao_cabecalho = re.compile(
-        r'(Cebraspe|cespe|Inédita|INÉDITA)',
-        re.IGNORECASE
-    )
-    resultado = padrao_cabecalho.search(texto)
-    return bool(resultado)
+class Processar():
+    def __init__(self, texto):
+        self.texto = texto
 
-def parse_parenteses(texto):
-    padrao_cabecalho = re.compile(r"\(([^)]*)\)") #re.MULTILINE | re.DOTALL
-    blocos = padrao_cabecalho.finditer(texto)
-    idxs = [bloco for bloco in blocos]
-    res = []
-    for idx in idxs:
-        if parse_banca(idx.group(1)):
-            res.append(idx)
-    if len(res) < 1:
+    def parse_presenca(self, trecho, regex):
+        padrao = re.compile(regex, re.IGNORECASE)
+        resultado = padrao.search(trecho)
+        return bool(resultado)
+
+    def parse_trecho(self, trecho, regex):
+        padrao = re.compile(regex, re.DOTALL)
+        blocos = padrao.search(trecho) # finditer(texto)
+        if blocos:
+            inicio, fim = self.divisao(trecho, blocos)
+            return inicio, fim
+        else:
+            return "", ""
+
+    def parse_parenteses(self, regex):
+        padrao_cabecalho = re.compile(regex) #re.MULTILINE | re.DOTALL
+        blocos = padrao_cabecalho.finditer(self.texto)
+        return [bloco for bloco in blocos]
+
+    def divisao(self, trecho, bloco):
+        inicio = bloco.start()
+        fim = bloco.end()
+        txt_inicio = trecho[:inicio].strip()
+        txt_fim = trecho[fim:].strip()
+        return txt_inicio, txt_fim
+
+def parse_questoes(texto):
+    processar = Processar(texto)
+    parenteses = processar.parse_parenteses(r'\(([^)]*)\)')
+    resultado = []
+    for idx in parenteses:
+        test = processar.parse_presenca(idx.group(0), r'(Cebraspe|cespe|Inédita|INÉDITA)')
+       #print(idx.group(0), test)
+        if test:
+            resultado.append(idx)
+    if len(resultado) < 1:
         print("Questões não encontradas")
-    return parse_questoes(texto, res)
 
-def parse_questoes(texto, res):
     questionario = []
-    for r in range(1, len(res)):
-        prev, next = res[r-1], res[r]
+    for r in range(1, len(resultado)):
+        prev, next = resultado[r-1], resultado[r]
         banca = prev.group(1)
         enunciado = texto[prev.end():next.start()].strip()
-        questao, comentario = parse_comentarios(enunciado)
-        _, gabarito = parse_gabarito(comentario)
+        questao, comentario = processar.parse_trecho(enunciado, r'(Comentários|Comentário|Comentários:|Comentário:)')# parse_comentario
+        _, gabarito = processar.parse_trecho(comentario, r'(Gabarito:)') # parse_gabarito
         questao_organizada = Questao(r, banca, questao, comentario, gabarito)
         if (questao_organizada.validar()):
             questionario.append(questao_organizada.to_dict())
@@ -58,36 +79,11 @@ def parse_questoes(texto, res):
             informacoes_incompletas.append(r)
     return questionario
 
-def parse_comentarios(texto):
-    padrao_cabecalho = re.compile(r'(Comentários|Comentário|Comentários:|Comentário:)', re.DOTALL)
-    blocos = padrao_cabecalho.search(texto)#finditer(texto)
-    if blocos:
-        questao, comentario = divisao(texto, blocos)
-        return questao, comentario
-    else:
-        return "", ""
-
-def parse_gabarito(texto):
-    padrao_cabecalho = re.compile(r'(Gabarito:)', re.DOTALL)
-    blocos = padrao_cabecalho.search(texto)#finditer(texto)
-    if blocos:
-        comentario, gabarito = divisao(texto, blocos)
-        return comentario, gabarito
-    else:
-        return "", ""
-
-def divisao(texto, bloco):
-    inicio = bloco.start()
-    fim = bloco.end()
-    txt_inicio = texto[:inicio].strip()
-    #titulo = texto[inicio:fim].strip()
-    txt_end = texto[fim:].strip()
-    return txt_inicio, txt_end
 
 def remover_elementos(texto, elementos):
     txt_resultado = texto
     for elemento in elementos:
-        txt_resultado.replace(elemento, " ")
+        txt_resultado = txt_resultado.replace(elemento, "")
     return txt_resultado
 
 def processar_arquivos(arquivo):
@@ -97,8 +93,7 @@ def processar_arquivos(arquivo):
     with open(arquivo, 'r', encoding='utf-8') as f:
         txt = ' '.join(f.read().split('\n'))
         texto = remover_elementos(txt, conf.REMOVER)
-        todas_questoes = parse_parenteses(texto)
-
+        todas_questoes = parse_questoes(texto)
 
     return todas_questoes
 
