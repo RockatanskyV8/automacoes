@@ -1,7 +1,7 @@
 import re
 import sys
 from collections import defaultdict
-from typing import List, Dict, Tuple, Any
+from typing import List, Dict, Tuple, Any, Iterator
 
 class Indice():
 
@@ -9,51 +9,42 @@ class Indice():
         self.informacoes: Dict[str, List[str]] = informacoes
         self.padrao_regex: str = padrao_regex
 
-    def encontrar_texto(self, conteudo: List[str], flags: int = re.DOTALL) -> Dict[str, str]:
+    def extrair_paginas(self, titulos: List[Tuple[str, int]], conteudo: List[str]) -> Iterator[List[str]]:
+        inicio: int = len(titulos)
+        if (inicio > 0):
+            for i in range(1, len(titulos)):
+                titulo_atual, posicao_atual = titulos[i-1]
+                titulo_proximo, posicao_proximo = titulos[i]
+    
+                numeros_entre = list(range(posicao_atual + 1, posicao_proximo))
+                conteudo_numeros_entre = [conteudo[numero].strip() for numero in numeros_entre if len(conteudo[numero])]
+                paginas_completas = [conteudo[posicao_atual - 1].strip(), *conteudo_numeros_entre]
+                paginas_completas_apenas_num = [pagina for pagina in paginas_completas if len(pagina) and pagina.isdigit()]
+    
+                menor = min(paginas_completas_apenas_num)
+    
+                if int(menor) < inicio:
+                    inicio = int(min(paginas_completas_apenas_num))
+    
+                yield paginas_completas_apenas_num
+
+            ultimo_titulo, ultima_posicao = titulos[-1]
+            ultimos_numeros = list(range(ultima_posicao + 1, len(conteudo) - 1))
+            conteudo_ultimos_numeros = [conteudo[numero].strip() for numero in ultimos_numeros if conteudo[numero].isdigit() and int(conteudo[numero]) > inicio]
+            yield [conteudo[ultima_posicao - 1].strip(), *conteudo_ultimos_numeros]
+
+    def encontrar_texto(self, conteudo: List[str], flags: int = re.DOTALL) -> Iterator[List[str]]:
         padrao_indice_abrangente = re.compile(
             self.padrao_regex,
             flags
         )
 
-        titulos: List[Tuple[str, int]] = []
         for titulo in conteudo:
             idx = conteudo.index(titulo)
             titulo_strip = titulo.strip()
             resultados = padrao_indice_abrangente.match(titulo_strip)
             if resultados:
-                titulos.append((titulo_strip, idx))
-
-        paginas: List[List[str]] = []
-        if len(titulos):
-            paginas = self.extrair_paginas(titulos, conteudo)
-
-        return self.indice_organizado(titulos, paginas)
-
-    def extrair_paginas(self, titulos: List[Tuple[str, int]], conteudo: List[str]) -> List[List[str]]:
-        inicio: int = len(titulos)
-        paginas: List[List[str]] = []
-        for i in range(1, len(titulos)):
-            titulo_atual, posicao_atual = titulos[i-1]
-            titulo_proximo, posicao_proximo = titulos[i]
-
-            numeros_entre = list(range(posicao_atual + 1, posicao_proximo))
-            conteudo_numeros_entre = [conteudo[numero].strip() for numero in numeros_entre if len(conteudo[numero])]
-            paginas_completas = [conteudo[posicao_atual - 1].strip(), *conteudo_numeros_entre]
-            paginas_completas_apenas_num = [pagina for pagina in paginas_completas if len(pagina) and pagina.isdigit()]
-
-            menor = min(paginas_completas_apenas_num)
-
-            if int(menor) < inicio:
-                inicio = int(min(paginas_completas_apenas_num))
-
-            paginas.append(paginas_completas_apenas_num)
-
-        ultimo_titulo, ultima_posicao = titulos[-1]
-        ultimos_numeros = list(range(ultima_posicao + 1, len(conteudo) - 1))
-        conteudo_ultimos_numeros = [conteudo[numero].strip() for numero in ultimos_numeros if conteudo[numero].isdigit() and int(conteudo[numero]) > inicio]
-        paginas.append([conteudo[ultima_posicao - 1].strip(), *conteudo_ultimos_numeros])
-
-        return paginas
+                yield (titulo_strip, idx)
 
     def indice_organizado(self, titulos: List[Tuple[str, int]], paginas: List[List[str]]) -> Dict[str, str]:
         indice: Dict[str, str] = defaultdict(list)  # type: ignore
@@ -100,15 +91,19 @@ class Indice():
 
             indice_total: Dict[str, str] = {}
             for c in conteudos:
-                resultados = self.encontrar_texto(c)
+                titulos: List[Tuple[str, int]] = list(self.encontrar_texto(c))
+                paginas: List[List[str]] = list(self.extrair_paginas(titulos, c))
+                resultados = self.indice_organizado(titulos, paginas)
                 indice_total = indice_total | resultados
-            print(indice_total)
 
             return indice_total
-            #return self.indice_separado(resultados)
         except(KeyError):
              print("Documento muito curto, provavelmente sem conteúdo relevante")
              return {"":""}
+        except Exception as e:
+             print("Erro de índice\n", e)
+             return {}
+
 
     def testar_extrair_indice(self, pag: str) -> Dict[str, str]:
         conteudo = ' '.join(self.informacoes[pag])
@@ -119,12 +114,8 @@ class Indice():
             self.padrao_regex,
             re.DOTALL
         )
-        #for palavra in conteudo:
         resultados = padrao_indice_abrangente.findall(conteudo.strip())
         print(resultados)
-
-        #resultados = padrao_indice_abrangente.match(conteudo)
-        #return resultados
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
@@ -143,11 +134,12 @@ if __name__ == "__main__":
             divis_info = divis.dividir()
 #           print(divis_info['2'])
 
-            PADRAO_REGEX = r'(\d+?)\s*\–\s*(.*?)\n'
-            #PADRAO_REGEX = r'(\d+)(\.)\s*(.*?)\n'
+            #PADRAO_REGEX = r'(\d+?)\s*\–\s*(.*?)\n'
+            PADRAO_REGEX = conf.PADRAO_REGEX_ALT
             #(\d+)(\)|-)\s*(.*?)\s
-            indx = Indice(divis_info, PADRAO_REGEX)
-            indx.exbir_possivel_indice()
+            indx = Indice(divis_info)#, PADRAO_REGEX)
+            resultado = indx.extrair_indice()
+            print(resultado)
             #indx = Indice(divis_info)
             #indx.testar_extrair_indice('2')
             #indx.testar_extrair_indice('3')
