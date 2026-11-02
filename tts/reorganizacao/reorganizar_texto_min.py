@@ -3,7 +3,7 @@ import re
 from collections import defaultdict
 from text_unidecode import unidecode
 
-from indiceObj import Indice
+from indiceObj import Indice, IndiceAlinhado
 from dividir_texto import Divisao
 import manipulacao_arquivos as m_arq
 import confidencial as conf
@@ -25,7 +25,7 @@ def dicionarizar(indx, informacao):
     secao_atual = 'introducao'
 
     for linha in informacao:
-        secao_atual = indx.get(linha, secao_atual)
+        secao_atual = indx.get_ou_padrao(linha, secao_atual)
         conteudo[secao_atual].append(' '.join(informacao[linha]))
 
     return dict(conteudo)
@@ -49,7 +49,7 @@ def reorganizar(conteudo, num_aula):
 
         m_arq.criar_novo_arquivo(novo_nome_arquivo, conteudo[titulo])
 
-def arquivo_imcompativel(conteudo_original):
+def arquivo_incompativel(conteudo_original):
     doc_desorganizado = []
     for linhas in conteudo_original:
         doc_desorganizado.append(' '.join(linhas))
@@ -78,24 +78,22 @@ if __name__ == "__main__":
         divis_info = divis.dividir()
         #print(divis_info)
         indx = Indice(divis_info)#, PADRAO_REGEX)
-        indx_extraido = indx.extrair_indice()
         #print(indx_extraido)
  
-        if len(indx_extraido):
-            print(num_aula, indx_extraido, "\n")
-            conteudo = dicionarizar(indx_extraido, divis_info)
+        if len(indx):
+            print(num_aula, str(indx), "\n")
+            conteudo = dicionarizar(indx, divis_info)
             reorganizar(conteudo, num_aula)
         else:
             print(num_aula, "Índice não compatível com o regex\nTestando regex alternativo...")
-            indx = Indice(divis_info, PADRAO_REGEX)
+            indx = IndiceAlinhado(divis_info)
             #indx_extraido = processar_indice(indx.extrair_indice(), 'Sumário')
-            indx_extraido = indx.extrair_indice()
-            if len(indx_extraido):
-                print(num_aula, indx_extraido, "\n")
-                conteudo = dicionarizar(indx_extraido, divis_info)
+            if len(indx):
+                print(num_aula, str(indx), "\n")
+                conteudo = dicionarizar(indx, divis_info)
                 reorganizar(conteudo, num_aula)
             else:
                 print(num_aula, "Índice alternativo também não compatível com o regex\nFazendo versão desorganizada...")
-                doc_desorganizado = arquivo_imcompativel(list(divis_info.values()))
+                doc_desorganizado = arquivo_incompativel(list(divis_info.values()))
                 m_arq.criar_novo_arquivo(num_aula + '_des_reorganizado.txt', doc_desorganizado)
 

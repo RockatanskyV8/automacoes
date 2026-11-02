@@ -9,14 +9,13 @@ class Divisao():
         self.informacao: List[str] = informacao
         self.remover: List[str] = remover
 
-    def remover_elementos(self) -> None:
+    def remover_elementos(self, linha: str) -> None:
         """
         Remove elementos da lista informacao conforme especificado em self.remover.
         Renomeado de 'remover' para evitar conflito com o atributo.
         """
         try:
-            for item in self.remover:
-                self.informacao.remove(item)
+            return (linha in self.remover)
         except ValueError as e:
             print(f"Erro: {e}")
 
@@ -33,10 +32,22 @@ class Divisao():
 
         for linha in self.informacao:
             linha_strip: str = linha.strip()
+            remover = self.remover_elementos(linha.strip())
 
             if linha_strip == self.divisor:
                 pagina += 1
+            elif remover:
+                pass
             else:
                 compilado[str(pagina)].append(linha)
 
         return dict(compilado)
+
+    def dicionarizar(self) -> Dict[str, List[str]]:
+        compilado: Dict[str, List[str]] = defaultdict(list)
+        for linha in self.informacao:
+            pagina = self.informacao.index(linha)
+            compilado[str(pagina)].append(linha)
+
+        return dict(compilado)
+
